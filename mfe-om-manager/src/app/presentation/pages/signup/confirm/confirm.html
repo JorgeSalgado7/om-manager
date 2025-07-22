@@ -1,0 +1,45 @@
+<div class="om_confirm_signup">
+
+	<div class="om_container">
+
+		<p-card class="om_confirm_signup__card">
+			<h1 class="om_confirm_signup__card__title">{{ title }}</h1>
+
+			<p-message *ngIf="showError" severity="error">{{ errorMessage }}</p-message>
+
+			<form>
+
+				<app-email-input 
+					[label]="emailLabel" 
+					[placeholder]="emailPlaceholder" 
+					[email]="email"
+					(emailChange)="email = $event" 
+					[error]="emailError" 
+					[errorMessage]="emailErrorMessage" 
+				/>
+
+				<app-code-input 
+					[label]="codeLabel" 
+					[placeholder]="codePlaceholder" 
+					[code]="code"
+					(codeChange)="code = $event"
+					[error]="codeError" 
+					[errorMessage]="codeErrorMessage" 
+				/>
+
+				<app-button 
+					[text]="confirmButtonText" 
+					[type]="'button'" 
+					(click)="confirm()"
+					[disabled]="email === '' || code === ''" 
+				/>
+
+			</form>
+
+		</p-card>
+
+	</div>
+
+	<app-loading-modal [isLoading]="isLoading" />
+
+</div>

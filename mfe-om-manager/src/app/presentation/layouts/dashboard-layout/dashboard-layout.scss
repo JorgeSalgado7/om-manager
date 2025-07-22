@@ -1,0 +1,27 @@
+@use '../../../../scss/config/colors' as *;
+
+.om_layout {
+	width: 100%;
+	min-height: 100vh;
+	background-color: $bg_ligth;
+
+	@media(min-width: 992px){
+		width: calc(100% - 260px);
+		margin-left: 260px;
+	}
+
+	&__main {
+		width: 100%;
+		min-height: 100vh;
+		display: flex;
+		flex-direction: column;
+
+		.om_container {
+			padding-top: 80px;
+			padding-bottom: 80px;
+			flex: 1;
+		}
+
+	}
+
+}

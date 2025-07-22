@@ -1,0 +1,88 @@
+@use '../mixins/flex' as *;
+@use '../config/colors' as *;
+@use 'sass:color';
+
+.om_btn {
+	width: 100%;
+	height: 43px;
+	@include flex-center-center;
+	border: 0;
+	border-radius: 5px;
+	font-size: 16px;
+	cursor: pointer;
+	transition: 0.3s;
+	outline: none;
+	padding: 6px 20px;
+
+	&:focus {
+		box-shadow: none !important;
+	}
+
+	&.om_btn-sm {
+		padding: 7px 16px;
+		font-size: 10px;
+		height: auto;
+		width: fit-content;
+	}
+	
+	&.om_btn-lg {
+		padding: 14px 30px;
+		font-size: 16px;
+		height: auto;
+		width: fit-content;
+	}
+	
+	i {
+		margin-right: 10px;
+	}
+
+}
+
+@each $name, $value in $colors {
+
+	.om_btn--#{$name} {
+		background-color: #{$value} !important;
+		border: 1px solid #{$value} !important;
+		color: $white !important;
+		box-shadow: 0 3px 5px 0 rgba($value, 0.1);
+
+		&:hover,
+		&:focus,
+		&:active,
+		&.active,
+		&.focus {
+			background-color: color.scale($value, $lightness: -10%) !important;
+			border-color: color.scale($value, $lightness: -10%) !important;
+			color: $white !important;
+		}
+		
+
+		&:disabled{
+			background-color: color.scale($value, $lightness: 60%) !important;
+			border-color: color.scale($value, $lightness: 60%) !important;
+			color: $white !important;
+			cursor: not-allowed;
+		}
+
+	}
+
+	.om_btn_outline--#{$name} {
+		border: 1px solid #{$value};
+		color: #{$value};
+		background-color: transparent;
+
+		&:hover,
+		&:focus,
+		&:active,
+		&.active,
+		&.focus,
+		&:not(:disabled):not(.disabled):active {
+			background-color: #{$value};
+			border-color: #{$value};
+			color: $white !important;
+			box-shadow: 0 3px 5px 0 rgba($value, 0.1);
+		}
+
+	}
+
+}

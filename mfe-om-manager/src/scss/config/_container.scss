@@ -1,0 +1,9 @@
+.om_container {
+	width: 100%;
+	padding: 0 15px;
+
+	@media(min-width: 992px){
+		padding: 0 30px;
+	}
+
+}

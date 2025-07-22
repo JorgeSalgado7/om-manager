@@ -1,0 +1,19 @@
+<div class="om_input">
+
+	<label [for]="label">{{ label }}</label>
+
+	<input 
+		pInputText 
+		type="text" 
+		[id]="label" 
+		[placeholder]="placeholder" 
+		[value]="inputValue" 
+		(input)="onInput($event)"
+		[ngClass]="{ 'p-invalid': error }" 
+	/>
+
+	<small class="om_input--error" *ngIf="error">
+		{{ errorMessage }}
+	</small>
+
+</div>

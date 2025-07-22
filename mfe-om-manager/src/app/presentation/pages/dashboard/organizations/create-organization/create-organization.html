@@ -1,0 +1,29 @@
+<div class="om_organizations_create">
+
+	<p-card class="om_organizations_create__card">
+		
+		<h2>{{ title }}</h2>
+
+		<div class="om_organizations_create__card__grid">
+
+			<app-text-input 
+				[label]="label"
+				[placeholder]="placeholder"
+				[inputValue]="name"
+				[error]="nameError"
+				[errorMessage]="nameErrorMessage"
+			/>
+
+			<app-button 
+				[text]="createButton"
+				[icon]="'pi pi-plus'"
+				[type]="'button'"
+			/>
+
+		</div>
+
+
+	</p-card>
+
+
+</div>

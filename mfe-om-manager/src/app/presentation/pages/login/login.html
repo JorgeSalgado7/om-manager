@@ -1,0 +1,47 @@
+<div class="om_login">
+
+	<div class="om_container">
+
+		<p-card class="om_login__card">
+			
+			<h1 class="om_login__card__title">{{ title }}</h1>
+
+			<p-message *ngIf="signinError" severity="error">{{ signinErrorMessage }}</p-message>
+
+			<form>
+
+				<app-email-input 
+					[label]="emailLabel"
+					[placeholder]="emailPlaceholder"
+					[email]="email"
+					(emailChange)="email = $event"
+					[error]="emailError"
+					[errorMessage]="emailErrorMessage"
+				/>
+
+				<app-password-input 
+					[label]="passwordLabel"
+					[placeholder]="passwordPlaceholder" 
+					[password]="password"
+					(passwordChange)="password = $event"
+					[error]="passwordError"
+					[errorMessage]="passwordErrorMessage"
+					[isSignUp]="isSignUp"
+				/>
+
+				<app-button 
+					[text]="loginButton"
+					[type]="'button'"
+					(click)="signin()"
+					[disabled]="email === '' || password === ''"
+				/>
+
+			</form>
+
+		</p-card>
+
+	</div>
+
+	<app-loading-modal  [isLoading]="isLoading" />
+
+</div>

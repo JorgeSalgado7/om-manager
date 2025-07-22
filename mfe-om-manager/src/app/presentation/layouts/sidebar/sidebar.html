@@ -1,0 +1,30 @@
+<aside class="om_layout_sidebar" [class.om_layout_sidebar--open]="isCollapsed">
+
+	<div class="om_container">
+
+		<h1 class="om_layout_sidebar__logo">OM Manager</h1>
+
+		<div class="om_layout_sidebar__menu">
+
+			<a
+				*ngFor="let item of menu"
+				class="om_layout_sidebar__menu__item"
+				[routerLink]="item.slug"
+				routerLinkActive="active"
+				[routerLinkActiveOptions]="{ exact: true }"
+			>
+				<i [ngClass]="item.icon"></i>
+				{{ item.name }}
+			</a>
+
+			<button (click)="logout()" class="om_layout_sidebar__menu__item">
+				<i class="pi pi-sign-out"></i>
+				Logout
+			</button>
+
+		</div>
+
+
+	</div>
+
+</aside>

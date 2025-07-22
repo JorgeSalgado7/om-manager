@@ -1,0 +1,33 @@
+@use '../config/colors' as *;
+
+p {
+	font-size: 16px;
+	font-weight: 400;
+	color: $text;
+}
+
+h1 {
+	font-size: 28px;
+	font-weight: 600;
+	color: $dark;
+}
+
+h2 {
+	font-size: 22px;
+	font-weight: 600;
+	color: $dark;
+}
+
+label {
+	font-size: 16px;
+	color: $dark;
+	font-weight: 500;
+	width: 100%;
+}
+
+a{
+	text-decoration: none;
+	cursor: pointer;
+	font-size: 16px;
+	transition: 0.3s;
+}

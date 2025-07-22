@@ -1,0 +1,8 @@
+<button 
+	[ngClass]="buttonClasses" 
+	[attr.type]="type"
+	[disabled]="disabled"
+>
+	<i *ngIf="icon" [ngClass]="icon"></i>
+	{{ text }}
+</button>

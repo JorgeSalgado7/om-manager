@@ -1,0 +1,16 @@
+.om_members {
+	width: 100%;
+
+	&__invitation {
+		display: grid;
+		grid-template-columns: 1fr;
+		align-items: center;
+		gap: 40px;
+
+		@media(min-width: 768px){
+			grid-template-columns: repeat(3, 1fr);
+		}
+
+	}
+
+}

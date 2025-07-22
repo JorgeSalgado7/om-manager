@@ -1,0 +1,21 @@
+<div class="om_layout">
+
+	<app-sidebar [isCollapsed]="isSidebarCollapsed" />
+
+	<main class="om_layout__main">
+
+		<app-header (toggleSidebar)="toggleSidebar()" />
+
+		<div class="om_container">
+
+			<router-outlet />
+
+		</div>
+
+		<app-footer />
+
+	</main>
+
+	
+
+</div>
