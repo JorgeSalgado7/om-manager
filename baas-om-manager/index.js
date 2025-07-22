@@ -1,10 +1,10 @@
 import { createMember } from './member/createMember.js'
-// import { updateMemberRole } from './member/updateMemberRole'
-// import { getAllMembers } from './member/getAllMembers'
-// import { deleteMemberOrg } from './member/deleteMemberOrg'
-// import { inviteMember } from './member/inviteMember'
-// import { updateMemberStatus } from './member/updateMemberStatus'
+import { getMembers } from './member/getMembers.js'
+import { inviteMember } from './member/inviteMember.j'
+import { updateMemberRole } from './member/updateMemberRole.js'
+import { deleteMemberFromOrganization } from './member/deleteMemberFromOrg.js'
 
+import { getAll } from './organization/getAll.js'
 import { getOrganizationsByEmail } from './organization/getOrganizations.js'
 import { createOrganization } from './organization/createOrganization.js'
 import { updateOrganization } from './organization/updateOrganization.js'
@@ -30,12 +30,34 @@ export const handler = async (event) => {
   }
 
   // Members
-  if (httpMethod === 'POST' && path === '/baas-om-manager/members/create') {
+  if (httpMethod === 'GET' && path === '/baas-om-manager/members') {
+    return await getMembers(event, headers)
+  }
+
+	if (httpMethod === 'POST' && path === '/baas-om-manager/members/create') {
     return await createMember(event, headers)
   }
 
+	if (httpMethod === 'POST' && path === '/baas-om-manager/members/invite') {
+    return await inviteMember(event, headers)
+  }
+	
+	if (httpMethod === 'PUT' && path === '/baas-om-manager/members/update-role') {
+    return await updateMemberRole(event, headers)
+  }
+
+	if (httpMethod === 'DELETE' && path === '/baas-om-manager/members/delete-from-org') {
+    return await deleteMemberFromOrganization(event, headers)
+  }
+
+
+
 	// Organizations
-  if (httpMethod === 'POST' && path === '/baas-om-manager/organizations/get-by-member-email') {
+  if (httpMethod === 'GET' && path === '/baas-om-manager/organizations') {
+    return await getAll(event, headers)
+  }
+	
+	if (httpMethod === 'POST' && path === '/baas-om-manager/organizations/get-by-member-email') {
     return await getOrganizationsByEmail(event, headers)
   }
   

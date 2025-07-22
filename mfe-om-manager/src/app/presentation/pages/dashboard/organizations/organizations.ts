@@ -61,9 +61,7 @@ export class Organizations {
 
 		} 
 		catch (error) {
-			
 			console.log(error)
-
 		}
 
 		finally {

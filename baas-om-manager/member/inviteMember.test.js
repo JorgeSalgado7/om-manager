@@ -1,6 +1,7 @@
 import { inviteMember } from '../member/inviteMember'
 import { DynamoDBDocumentClient, PutCommand } from '@aws-sdk/lib-dynamodb'
 import { SESClient, SendEmailCommand } from '@aws-sdk/client-ses'
+import { notificationResponse } from '../utils/notificationResponse.js'
 
 jest.mock('@aws-sdk/lib-dynamodb', () => {
   const originalModule = jest.requireActual('@aws-sdk/lib-dynamodb')
@@ -29,6 +30,7 @@ jest.mock('@aws-sdk/client-ses', () => {
 describe('inviteMember', () => {
   let ddbSendMock
   let sesSendMock
+  const fakeHeaders = { "Access-Control-Allow-Origin": "*" }
 
   beforeEach(() => {
     ddbSendMock = jest.fn()
@@ -43,9 +45,12 @@ describe('inviteMember', () => {
   })
 
   test('returns 400 if required fields missing', async () => {
-    const response = await inviteMember({ body: '{}' })
+    const response = await inviteMember({ body: '{}' }, fakeHeaders)
     expect(response.statusCode).toBe(400)
-    expect(JSON.parse(response.body).error).toBe('email, id_organization and invited_by are required')
+
+    const body = JSON.parse(response.body)
+    expect(body).toEqual(notificationResponse(null, true, "email, id_organization and invited_by are required"))
+    expect(response.headers).toEqual(fakeHeaders)
   })
 
   test('invites member successfully', async () => {
@@ -60,12 +65,23 @@ describe('inviteMember', () => {
       })
     }
 
-    const response = await inviteMember(event)
+    const response = await inviteMember(event, fakeHeaders)
 
     expect(ddbSendMock).toHaveBeenCalledTimes(1)
     expect(sesSendMock).toHaveBeenCalledTimes(1)
     expect(response.statusCode).toBe(201)
-    expect(JSON.parse(response.body).message).toBe('Invitation sent')
+
+    const body = JSON.parse(response.body)
+    // We expect memberItem in data and message "Invitation sent"
+    expect(body.error).toBe(false)
+    expect(body.message).toBe("Invitation sent")
+    expect(body.data).toMatchObject({
+      email: 'test@example.com',
+      id_organization: 'org123',
+      invited_by: 'owner123',
+      status: 'invited'
+    })
+    expect(response.headers).toEqual(fakeHeaders)
   })
 
   test('returns 409 if member already exists', async () => {
@@ -81,10 +97,13 @@ describe('inviteMember', () => {
       })
     }
 
-    const response = await inviteMember(event)
+    const response = await inviteMember(event, fakeHeaders)
 
     expect(response.statusCode).toBe(409)
-    expect(JSON.parse(response.body).error).toBe('Member already invited or exists in this organization')
+
+    const body = JSON.parse(response.body)
+    expect(body).toEqual(notificationResponse(null, true, "Member already invited or exists in this organization"))
+    expect(response.headers).toEqual(fakeHeaders)
   })
 
   test('returns 500 on internal error', async () => {
@@ -98,9 +117,12 @@ describe('inviteMember', () => {
       })
     }
 
-    const response = await inviteMember(event)
+    const response = await inviteMember(event, fakeHeaders)
 
     expect(response.statusCode).toBe(500)
-    expect(JSON.parse(response.body).error).toBe('Internal Server Error')
+
+    const body = JSON.parse(response.body)
+    expect(body).toEqual(notificationResponse(null, true, "Internal Server Error"))
+    expect(response.headers).toEqual(fakeHeaders)
   })
 })

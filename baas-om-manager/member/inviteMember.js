@@ -1,20 +1,18 @@
-import * as dotenv from "dotenv"
-dotenv.config()
-
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb"
 import { DynamoDBDocumentClient, PutCommand } from "@aws-sdk/lib-dynamodb"
 import { SESClient, SendEmailCommand } from "@aws-sdk/client-ses"
 import { v4 as uuidv4 } from "uuid"
+import { notificationResponse } from "../utils/notificationResponse.js"
 
 const ddbClient = new DynamoDBClient({})
 const ddbDocClient = DynamoDBDocumentClient.from(ddbClient)
 
 const sesClient = new SESClient({})
 
-const MEMBERS_TABLE = process.env.MEMBERS_TABLE
+const MEMBERS_TABLE = process.env.MEMBERS_TABLE_NAME
 const SES_SENDER_EMAIL = process.env.SES_SENDER_EMAIL
 
-export const inviteMember = async (event) => {
+export const inviteMember = async (event, headers) => {
 
   try {
 
@@ -24,11 +22,14 @@ export const inviteMember = async (event) => {
     if (!email || !id_organization || !invited_by) {
       return {
         statusCode: 400,
-        body: JSON.stringify({ error: "email, id_organization and invited_by are required" }),
+        headers,
+        body: notificationResponse(null, true, "email, id_organization and invited_by are required"),
       }
     }
 
     const memberId = uuidv4()
+
+    const now = new Date().toISOString()
 
     const memberItem = {
       id: memberId,
@@ -36,9 +37,9 @@ export const inviteMember = async (event) => {
       id_organization,
       invited_by,
       status: "invited",
-      invited_at: new Date().toISOString(),
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
+      invited_at: now,
+      created_at: now,
+      updated_at: now,
     }
 
     await ddbDocClient.send(new PutCommand({
@@ -68,7 +69,8 @@ export const inviteMember = async (event) => {
 
     return {
       statusCode: 201,
-      body: JSON.stringify({ message: "Invitation sent", member: memberItem }),
+      headers,
+      body: notificationResponse(memberItem, false, "Invitation sent"),
     }
 
   } 
@@ -77,7 +79,8 @@ export const inviteMember = async (event) => {
     if (error.name === 'ConditionalCheckFailedException') {
       return {
         statusCode: 409,
-        body: JSON.stringify({ error: "Member already invited or exists in this organization" }),
+        headers,
+        body: notificationResponse(null, true, "Member already invited or exists in this organization"),
       }
     }
 
@@ -85,7 +88,8 @@ export const inviteMember = async (event) => {
 
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: "Internal Server Error" }),
+      headers,
+      body: notificationResponse(null, true, "Internal Server Error"),
     }
 
   }

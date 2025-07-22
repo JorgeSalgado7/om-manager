@@ -5,7 +5,7 @@
 	min-height: 100vh;
 	background-color: $bg_ligth;
 
-	@media(min-width: 992px){
+	@media(min-width: 768px){
 		width: calc(100% - 260px);
 		margin-left: 260px;
 	}

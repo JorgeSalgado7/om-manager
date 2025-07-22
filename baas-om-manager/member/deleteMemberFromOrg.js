@@ -2,7 +2,7 @@ import * as dotenv from "dotenv"
 dotenv.config()
 
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb"
-import { DynamoDBDocumentClient, UpdateCommand } from "@aws-sdk/lib-dynamodb"
+import { DynamoDBDocumentClient, DeleteCommand } from "@aws-sdk/lib-dynamodb"
 import { notificationResponse } from "../utils/notificationResponse.js"
 
 const client = new DynamoDBClient({})
@@ -10,38 +10,44 @@ const ddbDocClient = DynamoDBDocumentClient.from(client)
 
 const MEMBER_ORG_TABLE = process.env.MEMBER_ORGANIZATION_TABLE_NAME
 
-export const updateMemberRole = async (event, headers) => {
+export const deleteMemberFromOrganization = async (event, headers) => {
   try {
     const body = JSON.parse(event.body || '{}')
-    const { id_member_org, role } = body
+    const { id_member_org } = body
 
-    if (!id_member_org || !role) {
+    if (!id_member_org) {
       return {
         statusCode: 400,
         headers,
-        body: notificationResponse(null, true, "id_member_org and role are required"),
+        body: notificationResponse(null, true, "id_member_org is required"),
       }
     }
 
     const params = {
       TableName: MEMBER_ORG_TABLE,
       Key: { id: id_member_org },
-      UpdateExpression: "set #r = :r",
-      ExpressionAttributeNames: { "#r": "role" },
-      ExpressionAttributeValues: { ":r": role },
-      ReturnValues: "ALL_NEW",
+      ConditionExpression: "attribute_exists(id)"
     }
 
-    const result = await ddbDocClient.send(new UpdateCommand(params))
+    await ddbDocClient.send(new DeleteCommand(params))
 
     return {
       statusCode: 200,
       headers,
-      body: notificationResponse({ updatedItem: result.Attributes }, false, "Role updated"),
+      body: notificationResponse({ id: id_member_org }, false, "Member removed from organization"),
     }
 
   } catch (error) {
     console.error(error)
+
+    if (error.name === "ConditionalCheckFailedException") {
+      return {
+        statusCode: 404,
+        headers,
+        body: notificationResponse(null, true, "Member not found in organization"),
+      }
+    }
+
     return {
       statusCode: 500,
       headers,

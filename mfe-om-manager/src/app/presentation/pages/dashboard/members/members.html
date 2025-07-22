@@ -1,26 +1,126 @@
 <div class="om_members">
 
+	<p-card>
 
-	<div class="om_members__invitation">
+		<h2>{{ title }}</h2>
 
-		<app-email-input 
-			[label]="emailLabel"
-			[placeholder]="emailPlaceholder"
-			[email]="email"
-			[error]="emailError"
-			[errorMessage]="emailErrorMessage"
-		/>
-	
+		<div class="om_members__invitation">
 		
-		<div></div>
+			<app-email-input 
+				[label]="emailLabel" 
+				[placeholder]="emailPlaceholder" 
+				[email]="email" 
+				[error]="emailError"
+				[errorMessage]="emailErrorMessage" 
+			/>
+		
+			<div></div>
 		
 		
-		<app-button 
-			[text]="sendInvitation"
-			[type]="'button'"
-		/>
+			<app-button [text]="sendInvitation" [type]="'button'" />
+		
+		</div>
+		
+		<p-table [value]="members" [paginator]="true" [rows]="5" [rowsPerPageOptions]="[5, 10, 20]">
+		
+			<ng-template #header>
+				<tr>
+					<th>ID</th>
+					<th>Email</th>
+					<th>Organizations</th>
+				</tr>
+			</ng-template>
+		
+			<ng-template #body let-member>
+		
+				<tr>
+		
+		
+					<td>{{ member.id }}</td>
+					<td>{{ member.email }}</td>
+		
+					<td>
+		
+						<p-table [value]="member.organizations">
+		
+							<ng-template #header>
+								<tr>
+									<th>Name</th>
+									<th>My role</th>
+									<th>Leave Org</th>
+								</tr>
+							</ng-template>
+		
+							<ng-template #body let-org>
+						
+								<tr>
 
-	</div>
+									<td>{{ org.name }}</td>
+
+									<td [pEditableColumn]="org.role" pEditableColumnField="role">
+									
+										<p-cellEditor>
+									
+											<ng-template #input>
+									
+												<div style="display: flex; align-items: center; justify-content: center;">
+									
+													<p-select 
+														[options]="roles" 
+														[(ngModel)]="org.role" 
+														optionValue="value"
+														placeholder="Select a role"
+														class="w-full md:w-56" 
+													/>
+									
+													<button 
+														class="om_btn om_btn_outline--primary om_btn-sm" 
+														style="margin-left: 10px;" 
+														[disabled]="org.name === ''"
+														(click)="updateRole(org.id_member_role, org.role)"
+													>
+														<i class="pi pi-pencil" style="margin: 0;"></i>
+													</button>
+									
+												</div>
+									
+									
+											</ng-template>
+									
+											<ng-template #output>
+												{{ org.role }}
+											</ng-template>
+									
+										</p-cellEditor>
+									
+									</td>
+
+									<td>
+
+										<button class="om_btn om_btn--danger om_btn-sm" (click)="delete(org.id_member_role)">
+											<i class="pi pi-trash" style="margin: 0;"></i>
+										</button>
+
+									</td>
+						
+								</tr>
+						
+							</ng-template>
+						
+						</p-table>
+		
+					</td>
+		
+		
+				</tr>
+		
+			</ng-template>
+		
+		</p-table>
+
+	</p-card>
+
+	<app-loading-modal [isLoading]="loading" />
 
 
 </div>
