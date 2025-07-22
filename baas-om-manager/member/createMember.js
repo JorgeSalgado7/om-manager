@@ -1,18 +1,16 @@
-import * as dotenv from "dotenv"
-dotenv.config()
-
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb"
 import { DynamoDBDocumentClient, PutCommand } from "@aws-sdk/lib-dynamodb"
 import { v4 as uuidv4 } from "uuid"
+import { notificationResponse } from "../utils/notificationResponse.js"
 
 const client = new DynamoDBClient({})
 const ddbDocClient = DynamoDBDocumentClient.from(client)
 
-const MEMBERS_TABLE = process.env.MEMBERS_TABLE_NAME
+const MEMBERS_TABLE = process.env.MEMBER_TABLE_NAME
 
-export const createMember = async (event) => {
+export const createMember = async (event, headers) => {
 
-  try {
+	try {
 
     const body = JSON.parse(event.body || '{}')
     const { email } = body
@@ -21,7 +19,8 @@ export const createMember = async (event) => {
 
       return {
         statusCode: 400,
-        body: JSON.stringify({ error: "Email is required" }),
+				headers,
+        body: notificationResponse(null, true, 'Email required'),
       }
 
     }
@@ -42,7 +41,8 @@ export const createMember = async (event) => {
 
     return {
       statusCode: 201,
-      body: JSON.stringify({ message: "Member created", member: memberItem }),
+			headers,
+      body: notificationResponse(memberItem, false, null),
     }
 
   } 
@@ -51,15 +51,16 @@ export const createMember = async (event) => {
     if (error.name === 'ConditionalCheckFailedException') {
       return {
         statusCode: 409,
-        body: JSON.stringify({ error: "Member with this email already exists" }),
+				headers,
+        body: notificationResponse(null, true, "Member with this email already exists")
       }
     }
 
-    console.error(error)
 
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: "Internal Server Error" }),
+			headers,
+      body: notificationResponse(null, true, "Internal Server Error")
     }
 
   }

@@ -24,4 +24,7 @@ export class CreateOrganization {
 	placeholder: string = en.organization.create.inputs.name.placeholder
 	createButton: string = en.organization.create.button
 
+	//recuperar email de local storage "om_email" ya es un string
+	//el endpoint a atacar es 
+
 }

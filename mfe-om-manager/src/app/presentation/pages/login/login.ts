@@ -1,7 +1,7 @@
 // Angular
 import { Component, inject } from '@angular/core'
 import { CommonModule } from '@angular/common'
-import { Router } from '@angular/router'
+import { Router, RouterModule } from '@angular/router'
 
 //Prime NG
 import { CardModule } from 'primeng/card'
@@ -23,6 +23,7 @@ import { en } from '../../locales/en'
   selector: 'app-login',
   imports: [
 		CommonModule,
+		RouterModule,
 
 		CardModule,
 		MessageModule,
@@ -58,6 +59,8 @@ export class Login {
 
 	loginButton: string = en.login.loginButton
 
+	createAccount: string = en.login.createAccount
+
 	signinError: boolean = false
 	signinErrorMessage: string = ''
 
@@ -72,6 +75,8 @@ export class Login {
 		try {
 			
 			const response = await this.awsAuthService.login(this.email, this.password)
+
+			localStorage.setItem('om_email',  this.email)
 			
 			if(response.notification.error && response.notification.message === en.login.awsStepsConstants.changePassword){
 				await this.router.navigate(['/login/new-password'])

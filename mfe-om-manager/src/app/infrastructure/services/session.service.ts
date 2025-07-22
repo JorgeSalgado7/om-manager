@@ -7,6 +7,7 @@ interface Tokens {
 
 @Injectable({ providedIn: 'root' })
 export class SessionService {
+
   private _tokens = signal<Tokens>({ idToken: null, accessToken: null })
   readonly tokens = this._tokens.asReadonly()
 
@@ -15,7 +16,7 @@ export class SessionService {
 
   constructor() {
     
-    const storedTokens = localStorage.getItem('tokens')
+    const storedTokens = localStorage.getItem('om_tokens')
 
     if (storedTokens) {
       this._tokens.set(JSON.parse(storedTokens))
@@ -26,13 +27,13 @@ export class SessionService {
 
   setTokens(tokens: Tokens) {
     this._tokens.set(tokens)
-    localStorage.setItem('tokens', JSON.stringify(tokens))
+    localStorage.setItem('om_tokens', JSON.stringify(tokens))
     this._isLoggedIn.set(true)
   }
 
   clearTokens() {
     this._tokens.set({ idToken: null, accessToken: null })
-    localStorage.removeItem('tokens')
+    localStorage.removeItem('om_tokens')
     this._isLoggedIn.set(false)
   }
 }

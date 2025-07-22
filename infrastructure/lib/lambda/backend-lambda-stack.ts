@@ -28,9 +28,9 @@ export class BackendStack extends Stack {
       handler: 'index.handler',
       code: lambda.Code.fromAsset('../baas-om-manager'),
       environment: {
-        ORGANIZATIONS_TABLE: props.organizationsTable.tableName,
-        MEMBERS_TABLE: props.membersTable.tableName,
-        MEMBER_ORGANIZATION_TABLE: props.memberOrganizationTable.tableName,
+        ORGANIZATION_TABLE_NAME: props.organizationsTable.tableName,
+        MEMBER_TABLE_NAME: props.membersTable.tableName,
+        MEMBER_ORGANIZATION_TABLE_NAME: props.memberOrganizationTable.tableName,
         SES_SENDER_EMAIL: 'jorge.salgadoh@outlook.com',
       },
       timeout: Duration.seconds(10),
@@ -65,6 +65,10 @@ export class BackendStack extends Stack {
     baasRoot.addProxy({
       defaultIntegration: new apigateway.LambdaIntegration(backendLambda),
       anyMethod: true,
+			defaultCorsPreflightOptions: {
+				allowOrigins: apigateway.Cors.ALL_ORIGINS,
+				allowMethods: apigateway.Cors.ALL_METHODS,
+			},
     })
 
     const errorTopic = new sns.Topic(this, 'BackendLambdaErrorTopic', {

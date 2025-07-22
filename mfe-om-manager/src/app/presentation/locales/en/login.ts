@@ -10,6 +10,7 @@ export const login = {
 		placeholder: '***********'
 	},
 	loginButton: 'Sign In',
+	createAccount: 'Create an account',
 	signinErrorMessage: 'Incorrect email or password',
 	awsStepsConstants: {
 		changePassword: 'CONFIRM_SIGN_IN_WITH_NEW_PASSWORD_REQUIRED'

@@ -1,61 +1,49 @@
-import { createMember } from './member/createMember'
-import { updateMemberRole } from './member/updateMemberRole'
-import { getAllMembers } from './member/getAllMembers'
-import { deleteMemberOrg } from './member/deleteMemberOrg'
-import { inviteMember } from './member/inviteMember'
-import { updateMemberStatus } from './member/updateMemberStatus'
-import { getMemberOrganizations } from './member/getMemberOrganizations'
+import { createMember } from './member/createMember.js'
+// import { updateMemberRole } from './member/updateMemberRole'
+// import { getAllMembers } from './member/getAllMembers'
+// import { deleteMemberOrg } from './member/deleteMemberOrg'
+// import { inviteMember } from './member/inviteMember'
+// import { updateMemberStatus } from './member/updateMemberStatus'
+// import { getMemberOrganizations } from './member/getMemberOrganizations'
 
-import { createOrganization } from './organization/createOrganization'
-import { updateOrganization } from './organization/updateOrganization'
-import { deleteOrganization } from './organization/deleteOrganization'
+import { createOrganization } from './organization/createOrganization.js'
+// import { updateOrganization } from './organization/updateOrganization'
+// import { deleteOrganization } from './organization/deleteOrganization'
 
 export const handler = async (event) => {
   
   const { httpMethod, path } = event
 
-  if (httpMethod === 'POST' && path === '/members') {
-    return createMember(event)
+	const headers = {
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Credentials": true,
+    "Access-Control-Allow-Headers": "Content-Type",
+    "Access-Control-Allow-Methods": "*"
   }
 
-  if (httpMethod === 'PATCH' && path === '/members/role') {
-    return updateMemberRole(event)
+  if (httpMethod === "OPTIONS") {
+    return {
+      statusCode: 204,
+      headers,
+      body: null,
+    }
   }
 
-  if (httpMethod === 'GET' && path === '/members') {
-    return getAllMembers(event)
+	//Members
+
+  if (httpMethod === 'POST' && path === '/baas-om-manager/members') {
+		return await createMember(event, headers)
   }
 
-  if (httpMethod === 'DELETE' && path === '/member-org') {
-    return deleteMemberOrg(event)
-  }
-
-  if (httpMethod === 'POST' && path === '/members/invite') {
-    return inviteMember(event)
-  }
-
-  if (httpMethod === 'PATCH' && path === '/members/status') {
-    return updateMemberStatus(event)
-  }
-
-  if (httpMethod === 'GET' && path === '/members/organizations') {
-    return getMemberOrganizations(event)
-  }
-
-  if (httpMethod === 'POST' && path === '/organizations') {
-    return createOrganization(event)
-  }
-
-  if (httpMethod === 'PATCH' && path === '/organizations') {
-    return updateOrganization(event)
-  }
-
-  if (httpMethod === 'DELETE' && path === '/organizations') {
-    return deleteOrganization(event)
+	//Organization
+	if (httpMethod === 'POST' && path === '/baas-om-manager/organization') {
+		return await createOrganization(event, headers)
   }
 
   return {
     statusCode: 404,
+		headers,
     body: JSON.stringify({ error: 'Route not found' }),
   }
+
 }

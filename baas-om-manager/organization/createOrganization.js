@@ -1,29 +1,48 @@
-import * as dotenv from "dotenv"
-dotenv.config()
-
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb"
-import { DynamoDBDocumentClient, PutCommand } from "@aws-sdk/lib-dynamodb"
+import { DynamoDBDocumentClient, PutCommand, ScanCommand } from "@aws-sdk/lib-dynamodb"
 import { v4 as uuidv4 } from "uuid"
+import { notificationResponse } from "../utils/notificationResponse.js"
 
 const client = new DynamoDBClient({})
 const ddbDocClient = DynamoDBDocumentClient.from(client)
 
-const ORGANIZATION_TABLE = process.env.ORGANIZATION_TABLE
-const MEMBER_ORG_TABLE = process.env.MEMBER_ORG_TABLE
+const ORGANIZATION_TABLE = process.env.ORGANIZATION_TABLE_NAME
+const MEMBER_ORG_TABLE = process.env.MEMBER_ORG_TABLE_NAME
+const MEMBER_TABLE = process.env.MEMBER_TABLE_NAME
 
-export const createOrganization = async (event) => {
+export const createOrganization = async (event, headers) => {
 
   try {
 
     const body = JSON.parse(event.body || '{}')
-    const { name, memberId } = body
+    const { name, email } = body
 
-    if (!name || !memberId) {
+    if (!name || !email) {
       return {
         statusCode: 400,
-        body: JSON.stringify({ error: "Name and memberId are required" }),
+				headers,
+        body: notificationResponse(null, true, "Name and email are required" ),
       }
     }
+
+    const scanResult = await ddbDocClient.send(new ScanCommand({
+      TableName: MEMBER_TABLE,
+      FilterExpression: "email = :email",
+      ExpressionAttributeValues: {
+        ":email": email,
+      },
+      ProjectionExpression: "id",
+    }))
+
+    if (!scanResult.Items || scanResult.Items.length === 0) {
+      return {
+        statusCode: 404,
+				headers,
+        body: notificationResponse(null, true, "Member with this email not found" ),
+      }
+    }
+
+    const memberId = scanResult.Items[0].id
 
     const orgId = uuidv4()
     const now = new Date().toISOString()
@@ -31,7 +50,6 @@ export const createOrganization = async (event) => {
     const organizationItem = {
       id: orgId,
       name,
-      id_owner: memberId,
       created_at: now,
       updated_at: now,
     }
@@ -58,16 +76,16 @@ export const createOrganization = async (event) => {
 
     return {
       statusCode: 201,
-      body: JSON.stringify({ message: "Organization created", organization: organizationItem }),
+			headers,
+      body: notificationResponse(organizationItem, false, null),
     }
 
-  } 
-  catch (error) {
-
+  } catch (error) {
     if (error.name === 'ConditionalCheckFailedException') {
       return {
         statusCode: 409,
-        body: JSON.stringify({ error: "Organization with this ID already exists" }),
+				headers,
+        body: notificationResponse(null, true, "Organization with this ID already exists"),
       }
     }
 
@@ -75,9 +93,8 @@ export const createOrganization = async (event) => {
 
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: "Internal Server Error" }),
+			headers,
+      body: notificationResponse(null, true, "Internal Server Error" ),
     }
-
   }
-
 }

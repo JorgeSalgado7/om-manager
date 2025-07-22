@@ -12,8 +12,12 @@ import { PasswordInput } from '../../components/inputs/password-input/password-i
 import { Button } from '../../components/button/button'
 import { LoadingModal } from '../../components/modals/loading-modal/loading-modal'
 
-// Infraestructura
+// Infraestructure
 import { AwsAuthService } from '../../../infrastructure/aws/aws-auth-service'
+import { MemberApiService } from '../../../infrastructure/services/member.service'
+
+// Application
+import { CreateMemberUseCase } from '../../../application/usecases/member/create-member.use-case'
 
 // Locales
 import { en } from '../../locales/en'
@@ -39,6 +43,12 @@ export class Signup {
 
 	private awsAuthService = inject(AwsAuthService)
 	private router = inject(Router)
+	private createMemberUseCase: CreateMemberUseCase
+
+  constructor() {
+    const memberApiService = new MemberApiService()
+    this.createMemberUseCase = new CreateMemberUseCase(memberApiService)
+  }
 
 	title: string = en.signup.title
 
@@ -76,15 +86,30 @@ export class Signup {
 
 			if (response.notification.error) {
 
-				if (response.notification.message === 'CONFIRM_SIGN_UP') {
-					await this.router.navigate(['/signup/confirm'], { queryParams: { email: this.email } })
-				} 
-				else {
+				try {
+
+					await this.createMemberUseCase.execute({ email: this.email })
 					
-					this.signupError = true;
-					this.signupErrorMessage = response.notification.message || ''
+					if (response.notification.message === 'CONFIRM_SIGN_UP') {
+						await this.router.navigate(['/signup/confirm'], { queryParams: { email: this.email } })
+					} 
+					else {
+						
+						this.signupError = true;
+						this.signupErrorMessage = response.notification.message || ''
+					}
+
+
+				} 
+				catch (err) {
+					this.signupError = true
+					this.signupErrorMessage = (err as Error).message
 				}
-			} else {
+
+
+				
+			} 
+			else {
 				await this.router.navigate(['/dashboard'])
 			}
 
