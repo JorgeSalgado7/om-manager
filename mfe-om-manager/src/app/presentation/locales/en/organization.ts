@@ -1,4 +1,5 @@
 export const organization = {
+	title: 'Organizations',
 	create: {
 		title: 'Create organization',
 		inputs: {

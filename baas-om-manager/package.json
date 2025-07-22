@@ -3,15 +3,17 @@
   "version": "1.0.0",
   "description": "Backend lambdas for OM Manager",
   "main": "index.js",
-	"type": "module",
+  "type": "module",
   "scripts": {
     "test": "jest --coverage"
   },
   "dependencies": {
     "@aws-sdk/client-dynamodb": "^3.318.0",
     "@aws-sdk/lib-dynamodb": "^3.318.0",
-    "uuid": "^9.0.0",
-    "dotenv": "^16.3.1"
+    "aws-sdk-client-mock": "^4.1.0",
+    "aws-sdk-client-mock-jest": "^4.1.0",
+    "dotenv": "^16.3.1",
+    "uuid": "^9.0.0"
   },
   "devDependencies": {
     "jest": "^29.6.1"

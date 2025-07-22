@@ -83,6 +83,13 @@
 			box-shadow: 0 3px 5px 0 rgba($value, 0.1);
 		}
 
+				&:disabled {
+					background-color: color.scale($value, $lightness: 60%) !important;
+					border-color: color.scale($value, $lightness: 60%) !important;
+					color: $white !important;
+					cursor: not-allowed;
+				}
+
 	}
 
 }

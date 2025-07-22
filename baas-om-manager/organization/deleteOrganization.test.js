@@ -12,15 +12,12 @@ import "aws-sdk-client-mock-jest"
 const ddbMock = mockClient(DynamoDBClient)
 
 describe("deleteOrganization Lambda", () => {
-
   beforeEach(() => {
     ddbMock.reset()
   })
 
   test("should delete organization and related member organizations", async () => {
-
     ddbMock.on(DeleteCommand).resolves({})
-
     ddbMock.on(QueryCommand).resolves({
       Items: [
         { id: "mo-1", id_member: "member1", id_organization: "org-123", role: "owner" },
@@ -28,11 +25,10 @@ describe("deleteOrganization Lambda", () => {
       ],
       LastEvaluatedKey: undefined,
     })
-
     ddbMock.on(BatchWriteCommand).resolves({})
 
     const event = {
-      pathParameters: { id: "org-123" },
+      body: JSON.stringify({ id: "org-123" }),
     }
 
     const result = await deleteOrganization(event)
@@ -41,13 +37,14 @@ describe("deleteOrganization Lambda", () => {
 
     const body = JSON.parse(result.body)
 
-    expect(body.message).toBe("Organization and related members deleted")
-
+    expect(body.notification).toEqual({
+      error: false,
+      message: "Organization and related members deleted",
+    })
   })
 
   test("should return 400 if no id provided", async () => {
-
-    const event = { pathParameters: {} }
+    const event = { body: JSON.stringify({}) }
 
     const result = await deleteOrganization(event)
 
@@ -55,16 +52,17 @@ describe("deleteOrganization Lambda", () => {
 
     const body = JSON.parse(result.body)
 
-    expect(body.error).toBe("Organization id is required")
-
+    expect(body.notification).toEqual({
+      error: true,
+      message: "Organization id is required",
+    })
   })
 
   test("should return 404 if organization not found", async () => {
-
     ddbMock.on(DeleteCommand).rejects({ name: "ConditionalCheckFailedException" })
 
     const event = {
-      pathParameters: { id: "org-unknown" },
+      body: JSON.stringify({ id: "org-unknown" }),
     }
 
     const result = await deleteOrganization(event)
@@ -73,8 +71,9 @@ describe("deleteOrganization Lambda", () => {
 
     const body = JSON.parse(result.body)
 
-    expect(body.error).toBe("Organization not found")
-
+    expect(body.notification).toEqual({
+      error: true,
+      message: "Organization not found",
+    })
   })
-
 })

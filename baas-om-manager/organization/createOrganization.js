@@ -7,7 +7,7 @@ const client = new DynamoDBClient({})
 const ddbDocClient = DynamoDBDocumentClient.from(client)
 
 const ORGANIZATION_TABLE = process.env.ORGANIZATION_TABLE_NAME
-const MEMBER_ORG_TABLE = process.env.MEMBER_ORG_TABLE_NAME
+const MEMBER_ORG_TABLE = process.env.MEMBER_ORGANIZATION_TABLE_NAME
 const MEMBER_TABLE = process.env.MEMBER_TABLE_NAME
 
 export const createOrganization = async (event, headers) => {

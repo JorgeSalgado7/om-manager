@@ -10,6 +10,7 @@
 				[label]="label"
 				[placeholder]="placeholder"
 				[inputValue]="name"
+				(inputValueChange)="name = $event"
 				[error]="nameError"
 				[errorMessage]="nameErrorMessage"
 			/>
@@ -18,12 +19,16 @@
 				[text]="createButton"
 				[icon]="'pi pi-plus'"
 				[type]="'button'"
+				[disabled]="name === ''"
+				(click)="createOrg()"
 			/>
 
 		</div>
 
 
 	</p-card>
+
+	<app-loading-modal [isLoading]="loading" />
 
 
 </div>

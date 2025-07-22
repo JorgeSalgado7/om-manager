@@ -3,29 +3,29 @@ dotenv.config()
 
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb"
 import { DynamoDBDocumentClient, UpdateCommand } from "@aws-sdk/lib-dynamodb"
+import { notificationResponse } from "../utils/notificationResponse.js"
 
 const client = new DynamoDBClient({})
 const ddbDocClient = DynamoDBDocumentClient.from(client)
 
-const ORGANIZATION_TABLE = process.env.ORGANIZATION_TABLE
+const ORGANIZATION_TABLE = process.env.ORGANIZATION_TABLE_NAME
 
-export const updateOrganization = async (event) => {
-
+export const updateOrganization = async (event, headers) => {
   try {
-
     const body = JSON.parse(event.body || '{}')
     const { id, name } = body
 
     if (!id || !name) {
       return {
         statusCode: 400,
-        body: JSON.stringify({ error: "Organization id and new name are required" }),
+        headers,
+        body: notificationResponse(null, true, "Organization id and name are required"),
       }
     }
 
     const now = new Date().toISOString()
 
-    await ddbDocClient.send(new UpdateCommand({
+    const updateResult = await ddbDocClient.send(new UpdateCommand({
       TableName: ORGANIZATION_TABLE,
       Key: { id },
       UpdateExpression: 'set #name = :name, updated_at = :updated_at',
@@ -40,26 +40,25 @@ export const updateOrganization = async (event) => {
 
     return {
       statusCode: 200,
-      body: JSON.stringify({ message: "Organization updated" }),
+      headers,
+      body: notificationResponse(updateResult.Attributes, false, "Organization updated successfully"),
     }
 
-  }
-  catch (error) {
-
+  } catch (error) {
     if (error.name === 'ConditionalCheckFailedException') {
       return {
         statusCode: 404,
-        body: JSON.stringify({ error: "Organization not found" }),
+        headers,
+        body: notificationResponse(null, true,"Organization not found"),
       }
     }
 
-    console.error(error)
+    console.error("Internal Error:", error)
 
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: "Internal Server Error" }),
+      headers,
+      body: notificationResponse(null,true,"Internal Server Error"),
     }
-
   }
-
 }

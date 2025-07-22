@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core'
+import { Component, Input, Output, EventEmitter } from '@angular/core'
 import { InputTextModule } from 'primeng/inputtext'
 import { NgClass, CommonModule} from '@angular/common'
 
@@ -20,8 +20,10 @@ export class TextInput {
 	@Input({ required: true }) error!: boolean
 	@Input({ required: true }) errorMessage!: string
 
+	@Output() inputValueChange = new EventEmitter<string>()
+
 	onInput(event: Event){
-		this.inputValue  = (event?.target as HTMLInputElement).value
+		this.inputValueChange.emit((event?.target as HTMLInputElement).value)
 	}
 
 }

@@ -7,10 +7,9 @@ import { Signup } from './presentation/pages/signup/signup'
 import { ConfirmSignup } from './presentation/pages/signup/confirm/confirm'
 
 import { DashboardLayout } from './presentation/layouts/dashboard-layout/dashboard-layout'
-import { Dashboard } from './presentation/pages/dashboard/dashboard'
 
+import { Organizations } from './presentation/pages/dashboard/organizations/organizations'
 import { CreateOrganization } from './presentation/pages/dashboard/organizations/create-organization/create-organization'
-import { UpdateOrganization } from './presentation/pages/dashboard/organizations/update-organization/update-organization'
 
 import { Members } from './presentation/pages/dashboard/members/members'
 
@@ -26,10 +25,9 @@ export const routes: Routes = [
 		path: '',
 		component: DashboardLayout,
 		children: [
-			{ path: 'dashboard', component: Dashboard },
 
+			{ path: 'organizations', component: Organizations },
 			{ path: 'organizations/create', component: CreateOrganization },
-			{ path: 'organizations/update', component: UpdateOrganization },
 		
 			{ path: 'members', component: Members},
 		

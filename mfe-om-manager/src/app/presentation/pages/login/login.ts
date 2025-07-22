@@ -83,7 +83,7 @@ export class Login {
 			}
 
 			else if(response.data !== null && !response.notification.error){
-				await this.router.navigate(['/dashboard'])
+				await this.router.navigate(['/organizations'])
 			}
 
 		} 
