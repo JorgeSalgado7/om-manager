@@ -4,20 +4,35 @@
 
 		<h2>{{ title }}</h2>
 
-		<div class="om_members__invitation">
+		<p-message *ngIf="invited" severity="success">User invited successfully!</p-message>
+
+		<div class="om_members__invitation" style="margin: 30px 0;">
 		
 			<app-email-input 
-				[label]="emailLabel" 
+				[label]="''" 
 				[placeholder]="emailPlaceholder" 
-				[email]="email" 
+				[email]="email"
+				(emailChange)="email = $event"
 				[error]="emailError"
-				[errorMessage]="emailErrorMessage" 
+				[errorMessage]="emailErrorMessage"
+				style="margin-top: -10px;"
 			/>
 		
-			<div></div>
+			<p-select 
+				[options]="organizations" 
+				[(ngModel)]="selectedOrg" 
+				optionValue="value" 
+				placeholder="Select a role"
+				class="w-full md:w-56" 
+			/>
 		
 		
-			<app-button [text]="sendInvitation" [type]="'button'" />
+			<app-button 
+				[text]="sendInvitation" 
+				[type]="'button'" 
+				[disabled]="email === '' || selectedOrg === ''"
+				(click)="inviteMember(email, selectedOrg)"
+			/>
 		
 		</div>
 		

@@ -1,0 +1,10 @@
+{
+  "dependencies": {
+    "@aws-cdk/aws-apigateway": "^1.204.0",
+    "@aws-cdk/aws-dynamodb": "^1.204.0",
+    "@aws-cdk/aws-iam": "^1.204.0",
+    "@aws-cdk/aws-lambda": "^1.204.0",
+    "@aws-cdk/aws-ses": "^1.204.0",
+    "dotenv": "^17.2.0"
+  }
+}

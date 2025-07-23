@@ -1,6 +1,6 @@
 import { createMember } from './member/createMember.js'
 import { getMembers } from './member/getMembers.js'
-import { inviteMember } from './member/inviteMember.j'
+import { inviteMember } from './member/inviteMember.js'
 import { updateMemberRole } from './member/updateMemberRole.js'
 import { deleteMemberFromOrganization } from './member/deleteMemberFromOrg.js'
 

@@ -8,6 +8,7 @@ export const API_CONFIG = {
 		UPDATE_MEMBER_ROLE: '/members/update-role',
 		DELETE_MEMBER_FROM_ORG: '/members/delete-from-org',
     
+		GET_ORGS: '/organizations',
 		GET_ORG_BY_MEMBER_EMAIL: '/organizations/get-by-member-email',
 		CREATE_ORG: '/organizations/create',
 		UPDATE_ORG: '/organizations/update',

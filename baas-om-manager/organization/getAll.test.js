@@ -1,7 +1,6 @@
-import { getOrganizations } from "../organizations/getOrganizations.js"
+import { getAll } from "../organization/getAll.js"  // ajusta la ruta según tu estructura
 import { DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb"
 import { notificationResponse } from "../utils/notificationResponse.js"
-import { ScanCommand } from "@aws-sdk/lib-dynamodb"
 
 jest.mock("@aws-sdk/lib-dynamodb", () => {
   const actual = jest.requireActual("@aws-sdk/lib-dynamodb")
@@ -15,7 +14,7 @@ jest.mock("@aws-sdk/lib-dynamodb", () => {
   }
 })
 
-describe("getOrganizations", () => {
+describe("getAll", () => {
   let sendMock
   const headers = { "Access-Control-Allow-Origin": "*" }
 
@@ -36,29 +35,29 @@ describe("getOrganizations", () => {
       ]
     })
 
-    const response = await getOrganizations({}, headers)
+    const response = await getAll({}, headers)
 
     expect(response.statusCode).toBe(200)
     expect(JSON.parse(response.body)).toEqual(
-      notificationResponse(
+      JSON.stringify(notificationResponse(
         [
           { id: "org1", name: "Organization One" },
           { id: "org2", name: "Organization Two" }
         ],
         false,
         null
-      )
+      ))
     )
   })
 
   test("should return 500 on error", async () => {
     sendMock.mockRejectedValueOnce(new Error("Dynamo error"))
 
-    const response = await getOrganizations({}, headers)
+    const response = await getAll({}, headers)
 
     expect(response.statusCode).toBe(500)
     expect(JSON.parse(response.body)).toEqual(
-      notificationResponse(null, true, "Internal Server Error")
+      JSON.parse(JSON.stringify(notificationResponse(null, true, "Internal Server Error")))
     )
   })
 })

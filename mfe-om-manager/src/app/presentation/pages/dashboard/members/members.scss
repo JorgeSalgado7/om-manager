@@ -4,7 +4,7 @@
 	&__invitation {
 		display: grid;
 		grid-template-columns: 1fr;
-		align-items: center;
+		align-items: start;
 		gap: 40px;
 
 		@media(min-width: 768px){

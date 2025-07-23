@@ -11,6 +11,19 @@ export class OrganizationApiService {
 
 	private readonly baseUrl = `${API_CONFIG.BASE_URL}`
 
+	async getOrganizations(): Promise<INotificationResponse> {
+
+		const response = await fetch(`${this.baseUrl}${API_CONFIG.ENDPOINTS.GET_ORGS}`, {
+			method: 'GET',
+			headers: {
+        'Content-Type': 'application/json'
+      },
+		})
+
+		return response.json()
+
+	}
+
 	async getOrganizationsByMemberEmail(data: IGetOrganizationsByMemberEmailDTO): Promise<INotificationResponse> {
 
 		const response = await fetch(`${this.baseUrl}${API_CONFIG.ENDPOINTS.GET_ORG_BY_MEMBER_EMAIL}`, {
