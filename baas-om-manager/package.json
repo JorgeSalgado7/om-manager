@@ -8,6 +8,7 @@
     "test": "jest --coverage"
   },
   "dependencies": {
+    "@aws-cdk/aws-ses": "^1.204.0",
     "@aws-sdk/client-dynamodb": "^3.318.0",
     "@aws-sdk/lib-dynamodb": "^3.318.0",
     "aws-sdk-client-mock": "^4.1.0",

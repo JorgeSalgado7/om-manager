@@ -20,7 +20,7 @@ RUN npm run build -- --configuration production
 FROM nginx:alpine
 
 # Copia los archivos construidos desde la etapa build
-COPY --from=build /app/dist/mfe-om-manager /usr/share/nginx/html
+COPY --from=build /app/dist/mfe-om-manager/browser /usr/share/nginx/html
 
 # Opcional: copia configuración personalizada de nginx si tienes
 # COPY nginx.conf /etc/nginx/nginx.conf

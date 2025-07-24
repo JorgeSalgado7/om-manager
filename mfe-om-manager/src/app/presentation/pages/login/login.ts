@@ -46,13 +46,13 @@ export class Login {
 
 	emailLabel: string = en.login.emailInput.label
 	emailPlaceholder: string = en.login.emailInput.placeholder
-	email: string = 'jorge.salgadoh@outlook.com'
+	email: string = ''
 	emailError: boolean = false
 	emailErrorMessage: string = ''
 
 	passwordLabel: string = en.login.passwordInput.label
 	passwordPlaceholder: string = en.login.passwordInput.placeholder
-	password: string = 'SOYsoloyo123_'
+	password: string = ''
 	passwordError: boolean = false
 	passwordErrorMessage: string = ''
 	isSignUp: boolean = false
