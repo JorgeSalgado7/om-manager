@@ -4,11 +4,6 @@ export const layout = {
 
 		menu: [
 			{
-				icon: 'pi pi-gauge',
-				name: 'Dashboard',
-				slug: 'dashboard'
-			},
-			{
 				icon: 'pi pi-building',
 				name: 'Organizations',
 				slug: 'organizations'
