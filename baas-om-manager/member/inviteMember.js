@@ -9,7 +9,7 @@ const ddbDocClient = DynamoDBDocumentClient.from(ddbClient)
 
 const sesClient = new SESClient({})
 
-const MEMBERS_TABLE = process.env.MEMBERS_TABLE_NAME
+const MEMBERS_TABLE = process.env.MEMBER_TABLE_NAME
 const SES_SENDER_EMAIL = process.env.SES_SENDER_EMAIL
 
 export const inviteMember = async (event, headers) => {
