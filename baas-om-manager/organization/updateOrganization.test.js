@@ -1,98 +1,85 @@
-import { updateOrganization } from "../organization/updateOrganization"
-import { DynamoDBClient } from "@aws-sdk/client-dynamodb"
-import { UpdateCommand } from "@aws-sdk/lib-dynamodb"
-import { mockClient } from "aws-sdk-client-mock"
-import "aws-sdk-client-mock-jest"
+import { jest } from '@jest/globals'
 
-const ddbMock = mockClient(DynamoDBClient)
+jest.unstable_mockModule('@aws-sdk/lib-dynamodb', () => {
+  const actual = jest.requireActual('@aws-sdk/lib-dynamodb')
+  return {
+    ...actual,
+    DynamoDBDocumentClient: {
+      from: jest.fn(),
+    },
+    UpdateCommand: actual.UpdateCommand || class UpdateCommand {},
+  }
+})
 
-describe("updateOrganization Lambda", () => {
-  const headers = { "Content-Type": "application/json" }
+const { updateOrganization } = await import('./updateOrganization.js')
+const { notificationResponse } = await import('../utils/notificationResponse.js')
+const libDynamoDB = await import('@aws-sdk/lib-dynamodb')
+
+describe('updateOrganization Lambda', () => {
+  beforeAll(() => {
+    jest.spyOn(console, 'error').mockImplementation(() => {})
+  })
+  afterAll(() => {
+    console.error.mockRestore()
+  })
+
+  const mockHeaders = { 'Content-Type': 'application/json' }
+  const mockSend = jest.fn()
 
   beforeEach(() => {
-    ddbMock.reset()
-  })
-
-  test("should update organization name", async () => {
-    ddbMock.on(UpdateCommand).resolves({
-      Attributes: {
-        id: "org-123",
-        name: "New Org Name",
-        updated_at: new Date().toISOString(),
-      },
+    jest.clearAllMocks()
+    libDynamoDB.DynamoDBDocumentClient.from.mockReturnValue({
+      send: mockSend,
     })
+  })
 
-    const event = {
-      body: JSON.stringify({
-        id: "org-123",
-        name: "New Org Name",
-      }),
-    }
+  it('should return 400 if id or name is missing', async () => {
+    const event = { body: JSON.stringify({ id: 'org1' }) }
+    const response = await updateOrganization(event, mockHeaders)
+    const body = JSON.parse(response.body)
 
-    const result = await updateOrganization(event, headers)
+    expect(response.statusCode).toBe(400)
+    expect(body.notification.error).toBe(true)
+    expect(body.notification.message).toBe('Organization id and name are required')
+  })
 
-    expect(result.statusCode).toBe(200)
-    expect(result.headers).toEqual(headers)
+  it('should update organization and return 200 with updated attributes', async () => {
+    const updatedAttrs = { id: 'org1', name: 'New Name', updated_at: '2025-07-25T00:00:00.000Z' }
+    mockSend.mockResolvedValueOnce({ Attributes: updatedAttrs })
 
-    const body = JSON.parse(result.body)
+    const event = { body: JSON.stringify({ id: 'org1', name: 'New Name' }) }
+    const response = await updateOrganization(event, mockHeaders)
+    const body = JSON.parse(response.body)
+
+    expect(response.statusCode).toBe(200)
     expect(body.notification.error).toBe(false)
-    expect(body.notification.message).toBe("Organization updated successfully")
-    expect(body.data.id).toBe("org-123")
-    expect(body.data.name).toBe("New Org Name")
+    expect(body.notification.message).toBe('Organization updated successfully')
+    expect(body.data).toEqual(updatedAttrs)
   })
 
-  test("should return 400 if id or name missing", async () => {
-    const event = {
-      body: JSON.stringify({ id: "org-123" }),
-    }
+  it('should return 404 if ConditionalCheckFailedException error occurs', async () => {
+    const error = new Error('Conditional check failed')
+    error.name = 'ConditionalCheckFailedException'
+    mockSend.mockRejectedValueOnce(error)
 
-    const result = await updateOrganization(event, headers)
+    const event = { body: JSON.stringify({ id: 'org1', name: 'New Name' }) }
+    const response = await updateOrganization(event, mockHeaders)
+    const body = JSON.parse(response.body)
 
-    expect(result.statusCode).toBe(400)
-    expect(result.headers).toEqual(headers)
-
-    const body = JSON.parse(result.body)
+    expect(response.statusCode).toBe(404)
     expect(body.notification.error).toBe(true)
-    expect(body.notification.message).toBe("Organization id and name are required")
+    expect(body.notification.message).toBe('Organization not found')
   })
 
-  test("should return 404 if organization not found", async () => {
-    ddbMock.on(UpdateCommand).rejects({ name: "ConditionalCheckFailedException" })
+  it('should return 500 on unexpected error', async () => {
+    mockSend.mockRejectedValueOnce(new Error('Unexpected error'))
 
-    const event = {
-      body: JSON.stringify({
-        id: "org-unknown",
-        name: "Name",
-      }),
-    }
+    const event = { body: JSON.stringify({ id: 'org1', name: 'New Name' }) }
+    const response = await updateOrganization(event, mockHeaders)
+    const body = JSON.parse(response.body)
 
-    const result = await updateOrganization(event, headers)
-
-    expect(result.statusCode).toBe(404)
-    expect(result.headers).toEqual(headers)
-
-    const body = JSON.parse(result.body)
+    expect(response.statusCode).toBe(500)
     expect(body.notification.error).toBe(true)
-    expect(body.notification.message).toBe("Organization not found")
-  })
-
-  test("should return 500 on internal error", async () => {
-    ddbMock.on(UpdateCommand).rejects(new Error("Unexpected error"))
-
-    const event = {
-      body: JSON.stringify({
-        id: "org-123",
-        name: "Name",
-      }),
-    }
-
-    const result = await updateOrganization(event, headers)
-
-    expect(result.statusCode).toBe(500)
-    expect(result.headers).toEqual(headers)
-
-    const body = JSON.parse(result.body)
-    expect(body.notification.error).toBe(true)
-    expect(body.notification.message).toBe("Internal Server Error")
+    expect(body.notification.message).toBe('Internal Server Error')
   })
 })

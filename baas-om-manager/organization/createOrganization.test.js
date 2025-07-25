@@ -1,99 +1,115 @@
-import { createOrganization } from "../organization/createOrganization"
-import { DynamoDBClient } from "@aws-sdk/client-dynamodb"
-import { DynamoDBDocumentClient, ScanCommand, PutCommand } from "@aws-sdk/lib-dynamodb"
-import { mockClient } from "aws-sdk-client-mock"
-import "aws-sdk-client-mock-jest"
+import { jest } from '@jest/globals'
+import * as uuid from 'uuid'
 
-const ddbMock = mockClient(DynamoDBClient)
+// Mockeamos módulos antes de importar el código
+jest.unstable_mockModule('@aws-sdk/lib-dynamodb', () => {
+  const actual = jest.requireActual('@aws-sdk/lib-dynamodb')
+  return {
+    ...actual,
+    DynamoDBDocumentClient: {
+      from: jest.fn(),
+    },
+    PutCommand: actual.PutCommand || class PutCommand {},
+    ScanCommand: actual.ScanCommand || class ScanCommand {},
+  }
+})
 
-const mockHeaders = {
-  "Content-Type": "application/json"
-}
+jest.unstable_mockModule('uuid', () => ({
+  v4: jest.fn(),
+}))
 
-describe("createOrganization Lambda", () => {
+const { createOrganization } = await import('./createOrganization.js')
+const { notificationResponse } = await import('../utils/notificationResponse.js')
+const libDynamoDB = await import('@aws-sdk/lib-dynamodb')
+const uuidModule = await import('uuid')
+
+describe('createOrganization Lambda', () => {
+  beforeAll(() => {
+    jest.spyOn(console, 'error').mockImplementation(() => {})
+  })
+
+  afterAll(() => {
+    console.error.mockRestore()
+  })
+
+  const mockHeaders = {
+    'Content-Type': 'application/json',
+  }
+
+  const mockSend = jest.fn()
 
   beforeEach(() => {
-    ddbMock.reset()
-  })
-
-  test("should create organization and member organization relation", async () => {
-    
-    ddbMock.on(ScanCommand).resolves({
-      Items: [{ id: "member-123" }],
+    jest.clearAllMocks()
+    libDynamoDB.DynamoDBDocumentClient.from.mockReturnValue({
+      send: mockSend,
     })
+  })
 
-    ddbMock.on(PutCommand).resolves({})
+  it('should create organization and memberOrg, returning 201', async () => {
+    const orgId = 'uuid-org-1234'
+    const memberOrgId = 'uuid-memberOrg-5678'
+    uuidModule.v4.mockImplementationOnce(() => orgId).mockImplementationOnce(() => memberOrgId)
 
-    const event = {
-      body: JSON.stringify({
-        name: "Org Test",
-        email: "test@example.com",
-      }),
-    }
+    mockSend.mockImplementationOnce(() => Promise.resolve({ Items: [{ id: 'member123' }] })) // ScanCommand
+    mockSend.mockImplementationOnce(() => Promise.resolve()) // PutCommand organization
+    mockSend.mockImplementationOnce(() => Promise.resolve()) // PutCommand memberOrg
 
-    const result = await createOrganization(event, mockHeaders)
+    const event = { body: JSON.stringify({ name: 'Org1', email: 'test@example.com' }) }
+    const response = await createOrganization(event, mockHeaders)
+    const body = JSON.parse(response.body)
 
-    expect(result.statusCode).toBe(201)
-
-    const body = JSON.parse(result.body)
-
+    expect(response.statusCode).toBe(201)
     expect(body.notification.error).toBe(false)
-    expect(body.data.name).toBe("Org Test")
-    expect(body.data.id).toBeDefined()
+    expect(body.data).toEqual(expect.objectContaining({ id: orgId, name: 'Org1' }))
+    expect(mockSend).toHaveBeenCalledTimes(3)
   })
 
-  test("should return 400 if name or email missing", async () => {
-    const event = {
-      body: JSON.stringify({ name: "Only name" }),
-    }
+  it('should return 400 if name or email are missing', async () => {
+    const event = { body: JSON.stringify({ name: '', email: '' }) }
+    const response = await createOrganization(event, mockHeaders)
+    const body = JSON.parse(response.body)
 
-    const result = await createOrganization(event, mockHeaders)
-
-    expect(result.statusCode).toBe(400)
-
-    const body = JSON.parse(result.body)
-
+    expect(response.statusCode).toBe(400)
     expect(body.notification.error).toBe(true)
-    expect(body.notification.message).toBe("Name and email are required")
+    expect(body.notification.message).toBe('Name and email are required')
   })
 
-  test("should return 404 if email not found in member table", async () => {
-    ddbMock.on(ScanCommand).resolves({ Items: [] })
+  it('should return 404 if member not found', async () => {
+    mockSend.mockImplementationOnce(() => Promise.resolve({ Items: [] })) // ScanCommand no encuentra
 
-    const event = {
-      body: JSON.stringify({
-        name: "Org Test",
-        email: "notfound@example.com",
-      }),
-    }
+    const event = { body: JSON.stringify({ name: 'Org1', email: 'notfound@example.com' }) }
+    const response = await createOrganization(event, mockHeaders)
+    const body = JSON.parse(response.body)
 
-    const result = await createOrganization(event, mockHeaders)
-
-    expect(result.statusCode).toBe(404)
-
-    const body = JSON.parse(result.body)
-
+    expect(response.statusCode).toBe(404)
     expect(body.notification.error).toBe(true)
-    expect(body.notification.message).toBe("Member with this email not found")
+    expect(body.notification.message).toBe('Member with this email not found')
   })
 
-  test("should return 500 on unexpected error", async () => {
-    ddbMock.on(ScanCommand).rejects(new Error("Unexpected Error"))
+  it('should return 409 if ConditionalCheckFailedException error', async () => {
+    mockSend.mockImplementationOnce(() => Promise.resolve({ Items: [{ id: 'member123' }] })) // ScanCommand
+    const error = new Error('Conditional check failed')
+    error.name = 'ConditionalCheckFailedException'
+    mockSend.mockImplementationOnce(() => Promise.reject(error)) // PutCommand organization fails here
 
-    const event = {
-      body: JSON.stringify({
-        name: "Org Test",
-        email: "test@example.com",
-      }),
-    }
+    const event = { body: JSON.stringify({ name: 'Org1', email: 'test@example.com' }) }
+    const response = await createOrganization(event, mockHeaders)
+    const body = JSON.parse(response.body)
 
-    const result = await createOrganization(event, mockHeaders)
-
-    expect(result.statusCode).toBe(500)
-
-    const body = JSON.parse(result.body)
-
+    expect(response.statusCode).toBe(409)
     expect(body.notification.error).toBe(true)
-    expect(body.notification.message).toBe("Internal Server Error")
+    expect(body.notification.message).toBe('Organization with this ID already exists')
+  })
+
+  it('should return 500 on unexpected error', async () => {
+    mockSend.mockRejectedValueOnce(new Error('Unexpected error')) // Error en scan
+
+    const event = { body: JSON.stringify({ name: 'Org1', email: 'test@example.com' }) }
+    const response = await createOrganization(event, mockHeaders)
+    const body = JSON.parse(response.body)
+
+    expect(response.statusCode).toBe(500)
+    expect(body.notification.error).toBe(true)
+    expect(body.notification.message).toBe('Internal Server Error')
   })
 })

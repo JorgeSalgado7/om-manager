@@ -5,7 +5,7 @@ import { updateMemberRole } from './member/updateMemberRole.js'
 import { deleteMemberFromOrganization } from './member/deleteMemberFromOrg.js'
 
 import { getAll } from './organization/getAll.js'
-import { getOrganizationsByEmail } from './organization/getOrganizations.js'
+import { getOrganizationsByEmail } from './organization/getOrganizationsByEmail.js'
 import { createOrganization } from './organization/createOrganization.js'
 import { updateOrganization } from './organization/updateOrganization.js'
 import { deleteOrganization } from './organization/deleteOrganization.js'

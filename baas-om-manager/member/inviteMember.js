@@ -10,9 +10,6 @@ import { v4 as uuidv4 } from "uuid"
 import { notificationResponse } from "../utils/notificationResponse.js"
 import nodemailer from "nodemailer"
 
-const ddbClient = new DynamoDBClient({})
-const ddbDocClient = DynamoDBDocumentClient.from(ddbClient)
-
 const MEMBERS_TABLE = process.env.MEMBER_TABLE_NAME
 const MEMBER_ORG_TABLE = process.env.MEMBER_ORGANIZATION_TABLE_NAME
 const EMAIL_USER = process.env.EMAIL_USER
@@ -27,7 +24,12 @@ const transporter = nodemailer.createTransport({
 })
 
 export const inviteMember = async (event, headers) => {
+
   try {
+
+		const client = new DynamoDBClient({})
+		const ddbDocClient = DynamoDBDocumentClient.from(client)
+
     const body = JSON.parse(event.body || '{}')
     const { email, id_organization, invited_by } = body
 

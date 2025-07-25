@@ -1,63 +1,68 @@
-import { getAll } from "../organization/getAll.js"  // ajusta la ruta según tu estructura
-import { DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb"
-import { notificationResponse } from "../utils/notificationResponse.js"
+import { jest } from '@jest/globals'
 
-jest.mock("@aws-sdk/lib-dynamodb", () => {
-  const actual = jest.requireActual("@aws-sdk/lib-dynamodb")
+jest.unstable_mockModule('@aws-sdk/lib-dynamodb', () => {
+  const actual = jest.requireActual('@aws-sdk/lib-dynamodb')
   return {
     ...actual,
     DynamoDBDocumentClient: {
-      from: jest.fn(() => ({
-        send: jest.fn()
-      }))
-    }
+      from: jest.fn(),
+    },
+    ScanCommand: actual.ScanCommand || class ScanCommand {},
   }
 })
 
-describe("getAll", () => {
-  let sendMock
-  const headers = { "Access-Control-Allow-Origin": "*" }
+const { getAll } = await import('./getAll.js')
+const { notificationResponse } = await import('../utils/notificationResponse.js')
+const libDynamoDB = await import('@aws-sdk/lib-dynamodb')
+
+describe('getAll Lambda', () => {
+  beforeAll(() => {
+    jest.spyOn(console, 'error').mockImplementation(() => {})
+  })
+
+  afterAll(() => {
+    console.error.mockRestore()
+  })
+
+  const mockHeaders = {
+    'Content-Type': 'application/json',
+  }
+
+  const mockSend = jest.fn()
 
   beforeEach(() => {
-    sendMock = jest.fn()
-    DynamoDBDocumentClient.from.mockReturnValue({ send: sendMock })
-  })
-
-  afterEach(() => {
     jest.clearAllMocks()
+    libDynamoDB.DynamoDBDocumentClient.from.mockReturnValue({
+      send: mockSend,
+    })
   })
 
-  test("should return organizations with id and name", async () => {
-    sendMock.mockResolvedValueOnce({
-      Items: [
-        { id: "org1", name: "Organization One" },
-        { id: "org2", name: "Organization Two" },
-      ]
-    })
+  it('should return 200 and organizations list', async () => {
+    const mockOrgs = [
+      { id: 'org1', name: 'Organization 1' },
+      { id: 'org2', name: 'Organization 2' },
+    ]
 
-    const response = await getAll({}, headers)
+    mockSend.mockResolvedValueOnce({ Items: mockOrgs })
+
+    const event = { }
+    const response = await getAll(event, mockHeaders)
+    const body = JSON.parse(response.body)
 
     expect(response.statusCode).toBe(200)
-    expect(JSON.parse(response.body)).toEqual(
-      JSON.stringify(notificationResponse(
-        [
-          { id: "org1", name: "Organization One" },
-          { id: "org2", name: "Organization Two" }
-        ],
-        false,
-        null
-      ))
-    )
+    expect(body.notification.error).toBe(false)
+    expect(body.data).toEqual(mockOrgs)
   })
 
-  test("should return 500 on error", async () => {
-    sendMock.mockRejectedValueOnce(new Error("Dynamo error"))
+  it('should handle error and return 500', async () => {
+    mockSend.mockRejectedValueOnce(new Error('Some failure'))
 
-    const response = await getAll({}, headers)
+    const event = { }
+    const response = await getAll(event, mockHeaders)
+    const body = JSON.parse(response.body)
 
     expect(response.statusCode).toBe(500)
-    expect(JSON.parse(response.body)).toEqual(
-      JSON.parse(JSON.stringify(notificationResponse(null, true, "Internal Server Error")))
-    )
+    expect(body.notification.error).toBe(true)
+    expect(body.notification.message).toBe('Internal Server Error')
   })
 })

@@ -3,14 +3,16 @@ import { DynamoDBDocumentClient, PutCommand } from "@aws-sdk/lib-dynamodb"
 import { v4 as uuidv4 } from "uuid"
 import { notificationResponse } from "../utils/notificationResponse.js"
 
-const client = new DynamoDBClient({})
-const ddbDocClient = DynamoDBDocumentClient.from(client)
+
 
 const MEMBERS_TABLE = process.env.MEMBER_TABLE_NAME
 
 export const createMember = async (event, headers) => {
 
 	try {
+
+		const client = new DynamoDBClient({})
+		const ddbDocClient = DynamoDBDocumentClient.from(client)
 
     const body = JSON.parse(event.body || '{}')
     const { email } = body

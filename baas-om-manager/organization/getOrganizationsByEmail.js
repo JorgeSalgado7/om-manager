@@ -7,21 +7,17 @@ import {
 } from "@aws-sdk/lib-dynamodb"
 import { notificationResponse } from "../utils/notificationResponse.js"
 
-const client = new DynamoDBClient({})
-const ddbDocClient = DynamoDBDocumentClient.from(client)
-
 const MEMBER_TABLE = process.env.MEMBER_TABLE_NAME
 const MEMBER_ORG_TABLE = process.env.MEMBER_ORGANIZATION_TABLE_NAME
 const ORGANIZATION_TABLE = process.env.ORGANIZATION_TABLE_NAME
 
-export const getOrganizationsByEmail = async (event) => {
-  const headers = {
-    "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Credentials": true,
-    "Content-Type": "application/json",
-  }
+export const getOrganizationsByEmail = async (event, headers) => {
 
   try {
+
+		const client = new DynamoDBClient({})
+		const ddbDocClient = DynamoDBDocumentClient.from(client)
+
     const body = JSON.parse(event.body || "{}")
     const { email } = body
 

@@ -2,9 +2,6 @@ import { DynamoDBClient } from "@aws-sdk/client-dynamodb"
 import { DynamoDBDocumentClient, ScanCommand, QueryCommand, GetCommand } from "@aws-sdk/lib-dynamodb"
 import { notificationResponse } from "../utils/notificationResponse.js"
 
-const client = new DynamoDBClient({})
-const ddbDocClient = DynamoDBDocumentClient.from(client)
-
 const ORGANIZATION_TABLE = process.env.ORGANIZATION_TABLE_NAME
 const MEMBER_ORG_TABLE = process.env.MEMBER_ORGANIZATION_TABLE_NAME
 const MEMBER_TABLE = process.env.MEMBER_TABLE_NAME
@@ -12,6 +9,9 @@ const MEMBER_TABLE = process.env.MEMBER_TABLE_NAME
 export const getMembers = async (event, headers) => {
 
   try {
+
+		const client = new DynamoDBClient({})
+		const ddbDocClient = DynamoDBDocumentClient.from(client)
 
     const membersData = await ddbDocClient.send(new ScanCommand({
       TableName: MEMBER_TABLE,

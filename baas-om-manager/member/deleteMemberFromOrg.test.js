@@ -1,79 +1,91 @@
-import { deleteMemberFromOrganization } from '../member/deleteMemberFromOrganization'
-import { DynamoDBDocumentClient, DeleteCommand } from '@aws-sdk/lib-dynamodb'
+import { jest } from '@jest/globals'
 
-jest.mock('@aws-sdk/lib-dynamodb', () => {
-  const originalModule = jest.requireActual('@aws-sdk/lib-dynamodb')
+// Mockeamos el módulo antes de importar el código que lo usa
+jest.unstable_mockModule('@aws-sdk/lib-dynamodb', () => {
   return {
-    ...originalModule,
     DynamoDBDocumentClient: {
-      from: jest.fn(() => ({
-        send: jest.fn()
-      }))
+      from: jest.fn(),
     },
-    DeleteCommand: jest.fn()
+    DeleteCommand: class DeleteCommand {}, // clase vacía para que exista
   }
 })
 
-describe('deleteMemberFromOrganization', () => {
-  let sendMock
-  const fakeHeaders = { "Access-Control-Allow-Origin": "*" }
+// Importamos dinámicamente después de mockear
+const { deleteMemberFromOrganization } = await import('./deleteMemberFromOrg.js')
+const { notificationResponse } = await import('../utils/notificationResponse.js')
+const libDynamoDB = await import('@aws-sdk/lib-dynamodb')
+
+describe('deleteMemberFromOrganization Lambda', () => {
+
+	beforeAll(() => {
+		jest.spyOn(console, 'error').mockImplementation(() => {})
+	})
+
+	afterAll(() => {
+		console.error.mockRestore()
+	})
+
+  const mockHeaders = {
+    'Content-Type': 'application/json',
+  }
+
+  const mockSend = jest.fn()
 
   beforeEach(() => {
-    sendMock = jest.fn()
-    DynamoDBDocumentClient.from.mockReturnValue({ send: sendMock })
-  })
-
-  afterEach(() => {
     jest.clearAllMocks()
+    // Mockeamos que DynamoDBDocumentClient.from() devuelve un objeto con método send mockeado
+    libDynamoDB.DynamoDBDocumentClient.from.mockReturnValue({
+      send: mockSend,
+    })
   })
 
-  test('returns 400 if id_member_org is missing', async () => {
-    const response = await deleteMemberFromOrganization({ body: '{}' }, fakeHeaders)
+  it('should return 400 if id_member_org is missing', async () => {
+    const event = { body: JSON.stringify({}) }
+    const response = await deleteMemberFromOrganization(event, mockHeaders)
+    const body = JSON.parse(response.body)
+
     expect(response.statusCode).toBe(400)
-    const body = JSON.parse(response.body)
-    expect(body.error).toBe('id_member_org is required')
+    expect(body.notification.error).toBe(true)
+    expect(body.notification.message).toBe('id_member_org is required')
   })
 
-  test('deletes member from organization successfully', async () => {
-    sendMock.mockResolvedValue({})
+  it('should return 200 and delete member', async () => {
+    mockSend.mockResolvedValueOnce({})
 
-    const event = {
-      body: JSON.stringify({ id_member_org: 'memberOrgId123' })
-    }
+    const event = { body: JSON.stringify({ id_member_org: '123' }) }
+    const response = await deleteMemberFromOrganization(event, mockHeaders)
+    const body = JSON.parse(response.body)
 
-    const response = await deleteMemberFromOrganization(event, fakeHeaders)
-    expect(sendMock).toHaveBeenCalledTimes(1)
+    expect(mockSend).toHaveBeenCalledTimes(1)
     expect(response.statusCode).toBe(200)
-    const body = JSON.parse(response.body)
-    expect(body.message).toBe('Member removed from organization')
-    expect(body.id).toBe('memberOrgId123')
+    expect(body.notification.error).toBe(false)
+    expect(body.data.id).toBe('123')
+    expect(body.notification.message).toBe('Member removed from organization')
   })
 
-  test('returns 404 if member not found', async () => {
-    const error = new Error()
+  it('should return 404 if member not found', async () => {
+    const error = new Error('Conditional check failed')
     error.name = 'ConditionalCheckFailedException'
-    sendMock.mockRejectedValue(error)
+    mockSend.mockRejectedValueOnce(error)
 
-    const event = {
-      body: JSON.stringify({ id_member_org: 'nonexistentId' })
-    }
-
-    const response = await deleteMemberFromOrganization(event, fakeHeaders)
-    expect(response.statusCode).toBe(404)
+    const event = { body: JSON.stringify({ id_member_org: 'notfound' }) }
+    const response = await deleteMemberFromOrganization(event, mockHeaders)
     const body = JSON.parse(response.body)
-    expect(body.error).toBe('Member not found in organization')
+
+    expect(response.statusCode).toBe(404)
+    expect(body.notification.error).toBe(true)
+    expect(body.notification.message).toBe('Member not found in organization')
   })
 
-  test('returns 500 on internal error', async () => {
-    sendMock.mockRejectedValue(new Error('Some DB error'))
+  it('should return 500 on unexpected error', async () => {
+    mockSend.mockRejectedValueOnce(new Error('Unexpected failure'))
 
-    const event = {
-      body: JSON.stringify({ id_member_org: 'memberOrgId123' })
-    }
-
-    const response = await deleteMemberFromOrganization(event, fakeHeaders)
-    expect(response.statusCode).toBe(500)
+    const event = { body: JSON.stringify({ id_member_org: 'error' }) }
+    const response = await deleteMemberFromOrganization(event, mockHeaders)
     const body = JSON.parse(response.body)
-    expect(body.error).toBe('Internal Server Error')
+
+    expect(response.statusCode).toBe(500)
+    expect(body.notification.error).toBe(true)
+    expect(body.notification.message).toBe('Internal Server Error')
   })
 })

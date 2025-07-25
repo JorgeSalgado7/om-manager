@@ -3,9 +3,6 @@ import { DynamoDBDocumentClient, PutCommand, ScanCommand } from "@aws-sdk/lib-dy
 import { v4 as uuidv4 } from "uuid"
 import { notificationResponse } from "../utils/notificationResponse.js"
 
-const client = new DynamoDBClient({})
-const ddbDocClient = DynamoDBDocumentClient.from(client)
-
 const ORGANIZATION_TABLE = process.env.ORGANIZATION_TABLE_NAME
 const MEMBER_ORG_TABLE = process.env.MEMBER_ORGANIZATION_TABLE_NAME
 const MEMBER_TABLE = process.env.MEMBER_TABLE_NAME
@@ -13,6 +10,9 @@ const MEMBER_TABLE = process.env.MEMBER_TABLE_NAME
 export const createOrganization = async (event, headers) => {
 
   try {
+
+		const client = new DynamoDBClient({})
+		const ddbDocClient = DynamoDBDocumentClient.from(client)
 
     const body = JSON.parse(event.body || '{}')
     const { name, email } = body

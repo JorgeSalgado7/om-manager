@@ -5,7 +5,7 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "test": "jest --coverage"
+    "test": "node --experimental-vm-modules ./node_modules/.bin/jest"
   },
   "dependencies": {
     "@aws-cdk/aws-ses": "^1.204.0",
@@ -22,9 +22,5 @@
   },
   "engines": {
     "node": ">=18.0.0"
-  },
-  "jest": {
-    "testEnvironment": "node",
-    "verbose": true
   }
 }
