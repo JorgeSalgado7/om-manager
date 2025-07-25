@@ -1,5 +1,11 @@
-import { DynamoDBClient } from "@aws-sdk/client-dynamodb"
-import { DynamoDBDocumentClient, PutCommand } from "@aws-sdk/lib-dynamodb"
+import {
+  DynamoDBClient,
+  ScanCommand
+} from "@aws-sdk/client-dynamodb"
+import {
+  DynamoDBDocumentClient,
+  PutCommand,
+} from "@aws-sdk/lib-dynamodb"
 import { v4 as uuidv4 } from "uuid"
 import { notificationResponse } from "../utils/notificationResponse.js"
 import nodemailer from "nodemailer"
@@ -33,32 +39,54 @@ export const inviteMember = async (event, headers) => {
       }
     }
 
-    const memberId = uuidv4()
     const now = new Date().toISOString()
 
-    // Insertar miembro en tabla members
-    const memberItem = {
-      id: memberId,
-      email,
-      id_organization,
-      invited_by,
-      status: "invited",
-      invited_at: now,
-      created_at: now,
-      updated_at: now,
+
+    const emailSearch = await ddbDocClient.send(new ScanCommand({
+			TableName: MEMBERS_TABLE,
+			FilterExpression: "#email = :email",
+			ExpressionAttributeNames: {
+				"#email": "email",
+			},
+			ExpressionAttributeValues: {
+				":email": { S: email },
+			},
+			Limit: 1,
+		}));
+
+    let memberId
+    let isNewMember = false
+
+    if (emailSearch.Items && emailSearch.Items.length > 0) {
+
+      memberId = emailSearch.Items[0].id
+    } else {
+ 
+      memberId = uuidv4()
+      isNewMember = true
+
+      const memberItem = {
+        id: memberId,
+        email,
+        id_organization,
+        invited_by,
+        status: "invited",
+        invited_at: now,
+        created_at: now,
+        updated_at: now,
+      }
+
+      await ddbDocClient.send(new PutCommand({
+        TableName: MEMBERS_TABLE,
+        Item: memberItem,
+        ConditionExpression: "attribute_not_exists(id)",
+      }))
     }
 
-    await ddbDocClient.send(new PutCommand({
-      TableName: MEMBERS_TABLE,
-      Item: memberItem,
-      ConditionExpression: "attribute_not_exists(email) AND attribute_not_exists(id_organization)",
-    }))
-
-    // Insertar relación miembro - organización con ID único
     const memberOrgId = uuidv4()
 
     const memberOrgItem = {
-      id: memberOrgId,          // Clave primaria obligatoria
+      id: memberOrgId,
       id_member: memberId,
       id_organization,
       role: "member",
@@ -72,7 +100,6 @@ export const inviteMember = async (event, headers) => {
       ConditionExpression: "attribute_not_exists(id)",
     }))
 
-    // Enviar correo de invitación
     await transporter.sendMail({
       from: `"Mi App" <${EMAIL_USER}>`,
       to: email,
@@ -86,7 +113,13 @@ export const inviteMember = async (event, headers) => {
     return {
       statusCode: 201,
       headers,
-      body: notificationResponse(memberItem, false, "Invitation sent"),
+      body: notificationResponse(
+        { id: memberId },
+        false,
+        isNewMember
+          ? "Invitation sent to new member"
+          : "Invitation sent to existing member"
+      ),
     }
 
   } catch (error) {
@@ -94,11 +127,11 @@ export const inviteMember = async (event, headers) => {
       return {
         statusCode: 409,
         headers,
-        body: notificationResponse(null, true, "Member already invited or exists in this organization"),
+        body: notificationResponse(null, true, "Member already added to this organization"),
       }
     }
 
-    console.error(error)
+    console.error("Error in inviteMember:", error)
 
     return {
       statusCode: 500,
