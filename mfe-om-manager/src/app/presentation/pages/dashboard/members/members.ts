@@ -195,6 +195,7 @@ export class Members {
 
 			if(!notification.error){
 				this.invited = true
+				this.getMembers()
 			}
 
 		} 

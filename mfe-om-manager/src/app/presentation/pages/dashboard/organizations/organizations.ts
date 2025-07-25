@@ -11,7 +11,7 @@ import { en } from '../../../locales/en'
 
 import { OrganizationApiService } from '../../../../infrastructure/services/organization.service'
 
-import { GetOrganizationsByMemberEmail } from '../../../../application/usecases/organization/getOrganizationsByMemberEmail.usecase'
+import { GetOrganizations } from '../../../../application/usecases/organization/getOrganizations.usecase'
 import { UpdateOrganizationUseCase } from '../../../../application/usecases/organization/updateOrganization.usecase'
 import { DeleteOrganizationUseCase } from '../../../../application/usecases/organization/deleteOrganization.usecase'
 
@@ -31,13 +31,13 @@ import { DeleteOrganizationUseCase } from '../../../../application/usecases/orga
 })
 export class Organizations {
 
-	private getOrganizationsByMemberEmail: GetOrganizationsByMemberEmail
+	private getOrganizations: GetOrganizations
 	private updateOrganization: UpdateOrganizationUseCase
 	private deleteOrganizationUseCase: DeleteOrganizationUseCase
 
 	constructor(){
 		const organizationApiService = new OrganizationApiService()
-		this.getOrganizationsByMemberEmail = new GetOrganizationsByMemberEmail(organizationApiService)
+		this.getOrganizations = new GetOrganizations(organizationApiService)
 		this.updateOrganization = new UpdateOrganizationUseCase(organizationApiService)
 		this.deleteOrganizationUseCase = new DeleteOrganizationUseCase(organizationApiService)
 	}
@@ -53,7 +53,7 @@ export class Organizations {
 
 		try {
 		
-			const { data } = await this.getOrganizationsByMemberEmail.execute({ email: localStorage.getItem('om_email') || '' })
+			const { data } = await this.getOrganizations.execute()
 
 			if(data !== null){
 				this.organizations = data

@@ -19,7 +19,6 @@
 			<ng-template #header>
 				<tr>
 					<th>Name</th>
-					<th>My role</th>
 					<th>Action</th>
 				</tr>
 			</ng-template>
@@ -60,8 +59,6 @@
 						</p-cellEditor>
 
 					</td>
-
-					<td>{{ org.role }}</td>
 
 					<td>
 						<button class="om_btn om_btn--danger om_btn-sm" (click)="deleteOrg(org.id)">

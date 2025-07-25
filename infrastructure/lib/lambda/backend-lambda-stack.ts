@@ -32,6 +32,8 @@ export class BackendStack extends Stack {
         MEMBER_TABLE_NAME: props.membersTable.tableName,
         MEMBER_ORGANIZATION_TABLE_NAME: props.memberOrganizationTable.tableName,
         SES_SENDER_EMAIL: 'jorge.salgadoh@outlook.com',
+				EMAIL_USER: 'jorgesalgadoh7@gmail.com',
+				EMAIL_PASS: 'hgsl nnfo xpzd lgtd'
       },
       timeout: Duration.seconds(10),
       memorySize: 512,
